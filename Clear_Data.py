@@ -18,17 +18,27 @@ from bokeh.transform import linear_cmap
 #i import to much things...
 
 ####--------------------------------------------
-#				clear beijing_17_18_aq
+#				clear beijing_17_18_aq training and test
 ####--------------------------------------------
 
+#traing
 data_beijing_17_18_aq = pd.read_csv("final_project2018_data/beijing_17_18_aq.csv")
+#test
+data_beijing_201802_201803_aq = pd.read_csv("final_project2018_data/beijing_201802_201803_aq.csv")
+
 #define 'utc_time' column as time
 data_beijing_17_18_aq['utc_time'] = pd.to_datetime(data_beijing_17_18_aq['utc_time'])
-#remove row with no data (except stationId,utc_time) and row copy
+data_beijing_201802_201803_aq['utc_time'] = pd.to_datetime(data_beijing_201802_201803_aq['utc_time'])
+
+#remove row with no data (except stationId,utc_time) and duplicates
 data_beijing_17_18_aq = data_beijing_17_18_aq.dropna(thresh=3)
 data_beijing_17_18_aq = data_beijing_17_18_aq.drop_duplicates()
+data_beijing_201802_201803_aq = data_beijing_201802_201803_aq.dropna(thresh=3)
+data_beijing_201802_201803_aq = data_beijing_201802_201803_aq.drop_duplicates()
+
 data_beijing_17_18_aq.to_csv('final_project2018_data/CSV_Create_Plot/beijing_17_18_aq.csv', index=False)
-print("- beijing_17_18_aq.csv created and clean")
+data_beijing_201802_201803_aq.to_csv('final_project2018_data/CSV_Create_Plot/beijing_201802_201803_aq.csv', index=False)
+print("- beijing_17_18_aq.csv and beijing_201802_201803_aq created and clean")
 
 
 ####--------------------------------------------
@@ -38,6 +48,16 @@ print("- beijing_17_18_aq.csv created and clean")
 Beijing_AirQuality_Stations_en = pd.read_csv("final_project2018_data/Beijing_AirQuality_Stations_en.csv")
 Beijing_AirQuality_Stations_en.to_csv('final_project2018_data/CSV_Create_Plot/Beijing_AirQuality_Stations_en.csv', index=False)
 print("- Beijing_AirQuality_Stations_en.csv created and clean")
+
+
+####--------------------------------------------
+#				clear Beijing_grid_weather_station
+####--------------------------------------------
+col_names= ['Station ID','latitude','longitude']
+Beijing_AirQuality_Stations_en = pd.read_csv("final_project2018_data/Beijing_grid_weather_station.csv",  names=col_names, header=None)
+Beijing_AirQuality_Stations_en.to_csv('final_project2018_data/CSV_Create_Plot/Beijing_grid_weather_station.csv', index=False, columns=col_names)
+print("- Beijing_grid_weather_station.csv created and clean")
+
 
 ##----------------------------------------------
 ##create dataframe with column for each critere "O3, stationId .."and for each stationId and for each column and we have less row
@@ -56,7 +76,7 @@ for idOfStation in listStationId:
 	result = pd.concat([result, listWithStation[i]], axis=1)
 	i=i+1
 
-result.to_csv('final_project2018_data/CSV_Create_Plot/beijing_17_18_columnByStation.csv')
+result.to_csv('final_project2018_data/CSV_Create_Plot/beijing_17_18_columnByStation.csv', index=False)
 print("- beijing_17_18_columnByStation.csv created and clean")
 ##----------------------------------------------
 ##create dataframe with column for each critere "O3, stationId .."and for each utc_time  and for each column and we have less row
