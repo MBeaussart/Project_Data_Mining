@@ -2,19 +2,7 @@ import pandas as pd
 import csv
 import numpy as np
 import time
-from itertools import combinations
-from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
-from bokeh.layouts import row, widgetbox, column, gridplot, layout
-
-from bokeh.models import HoverTool, ColumnDataSource, Select, Slider, CustomJS, DataRange1d, Plot, LinearAxis, Grid
-from bokeh.models.markers import Circle
-from bokeh.plotting import figure, show, output_file, ColumnDataSource, Figure
-from bokeh.util.hex import hexbin
-
-from bokeh.io import curdoc, show
-from bokeh.transform import linear_cmap
 #i import to much things...
 
 ####--------------------------------------------
@@ -40,6 +28,30 @@ def clear_beijing_17_18_aq_AND_201803():
 	data_beijing_17_18_aq.to_csv('final_project2018_data/CSV_Create_Plot/beijing_17_18_aq.csv', index=False)
 	data_beijing_201802_201803_aq.to_csv('final_project2018_data/CSV_Create_Plot/beijing_201802_201803_aq.csv', index=False)
 	print("[X]")
+
+
+
+####--------------------------------------------
+#				create data begining neural network
+####--------------------------------------------
+def clear_beijing_17_18_aq_AND_201803():
+	print("- beijing_17_18_aq_deep", end=' ')
+
+	data_beijing_17_18_aq_deep = pd.read_csv('final_project2018_data/CSV_Create_Plot/beijing_17_18_aq.csv')
+
+	data_beijing_17_18_aq_deep = data_beijing_17_18_aq_deep.loc[lambda df: df['stationId']=="aotizhongxin_aq",:].fillna(0)
+	data_beijing_17_18_aq_deep.drop(data_beijing_17_18_aq_deep.columns[0], axis=1, inplace=True)
+
+	#define 'utc_time' column as time
+	data_beijing_17_18_aq_deep['utc_time'] = pd.to_datetime(data_beijing_17_18_aq_deep['utc_time'])
+
+
+	data_beijing_17_18_aq_deep.to_csv('final_project2018_data/CSV_Create_Plot/beijing_17_18_aq_deep.csv', index=False)
+	print("[X]")
+
+
+
+
 
 ####--------------------------------------------
 #				create Beijing_Weather_Stations_en
@@ -189,11 +201,12 @@ def clear_beijing_17_18_columnByDate():
 
 
 #		main
+#clear_beijing_17_18_aq_AND_201803()
 clear_beijing_17_18_aq_AND_201803()
-create_Beijing_Weather_Stations_en()
-clear_beijing_17_18_meo_AND_201803()
-clear_Beijing_AirQuality_Stations_en()
-clear_Beijing_grid_weather_station()
-clear_Beijing_historical_meo_grid()
-clear_beijing_17_18_columnByStation()
-clear_beijing_17_18_columnByDate()
+#create_Beijing_Weather_Stations_en()
+#clear_beijing_17_18_meo_AND_201803()
+#clear_Beijing_AirQuality_Stations_en()
+#clear_Beijing_grid_weather_station()
+#clear_Beijing_historical_meo_grid()
+#clear_beijing_17_18_columnByStation()
+#clear_beijing_17_18_columnByDate()
