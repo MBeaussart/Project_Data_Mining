@@ -1,6 +1,12 @@
 import pandas as pd
 import csv
 import numpy as np
+
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+
 from bokeh.layouts import row, widgetbox, column, gridplot, layout
 
 from bokeh.models import HoverTool, ColumnDataSource, Select, Slider, CustomJS, DataRange1d, Plot, LinearAxis, Grid
@@ -160,7 +166,6 @@ slider_grid = Slider(start=0, end=len(Dataframe_Date), value=0, width=800, step=
 data_beijing_grid=pd.DataFrame()
 data_beijing_grid = Beijing_AirQuality_Stations_en.append(Beijing_grid_weather_station)
 
-print
 #the first plot (O3)
 source = ColumnDataSource(data_beijing_grid)
 plot_grid_station.circle('latitude', 'longitude', source=source, fill_alpha=0.2, size=4)
@@ -168,3 +173,30 @@ plot_grid_station.circle('latitude', 'longitude', source=source, fill_alpha=0.2,
 
 layout = gridplot([[plot_O3, widgetbox(slider_O3)], [plot_CO, widgetbox(slider_CO)],[plot_grid, widgetbox(slider_grid)],[plot_grid_station]])
 show(layout)
+
+###-------------------------------------------------------------------------------
+# 				matlab plot (example)
+###-------------------------------------------------------------------------------
+fig = plt.figure()
+ax = fig.gca(projection='3d')
+
+# Make data.
+X = np.arange(-5, 5, 0.25)
+Y = np.arange(-5, 5, 0.25)
+X, Y = np.meshgrid(X, Y)
+R = np.sqrt(X**2 + Y**2)
+Z = np.sin(R)
+
+# Plot the surface.
+surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
+					   linewidth=0, antialiased=False)
+
+# Customize the z axis.
+ax.set_zlim(-1.01, 1.01)
+ax.zaxis.set_major_locator(LinearLocator(10))
+ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+
+# Add a color bar which maps values to colors.
+fig.colorbar(surf, shrink=0.5, aspect=5)
+
+plt.show()
