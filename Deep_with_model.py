@@ -13,6 +13,8 @@ from keras.layers import LSTM
 
 from keras.utils import np_utils
 
+from copy import deepcopy
+
 #from sklearn.preprocessing import MinMaxScaler
 #from sklearn.metrics import mean_squared_error
 
@@ -50,7 +52,13 @@ model = load_model('model1.h5')
 dataset = pd.read_csv('final_project2018_data/CSV_Create_Plot/beijing_17_18_aq_deep.csv', header=0, index_col=0)
 values = dataset.values
 values = values.astype('float32')
-scaled = values
+
+X_std = values
+save_values = deepcopy(values)
+for i in range(X_std.shape[1]):
+	X_std[:,i] = (values[:,i] - values[:,i].min(axis=0)) / (values[:,i].max(axis=0) - values[:,i].min(axis=0))
+scaled = X_std
+
 n_train_hours = 35
 n_hours = 48
 n_features = 6
@@ -68,6 +76,13 @@ test_X, test_y = test[:, :n_obs], test2[:, :n_obs]
 test_X = test_X.reshape((test_X.shape[0], n_hours, n_features))
 yplot = model.predict(test_X)
 
+inv_y = yplot
+for i in range(X_std.shape[1]):
+	inv_y[:,i]  = (inv_y[:,i] * (save_values[:,i].max(axis=0) - save_values[:,i].min(axis=0))) + save_values[:,i].min(axis=0)
+yplot = inv_y
+
+for i in range(X_std.shape[1]):
+	test_y[:,i]  = (test_y[:,i] * (save_values[:,i].max(axis=0) - save_values[:,i].min(axis=0))) + save_values[:,i].min(axis=0)
 
 for i in [0,1,2,3,4,5]:
 	pyplot.plot(yplot[:,i], label='result neural network')

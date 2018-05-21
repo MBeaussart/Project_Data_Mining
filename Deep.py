@@ -13,6 +13,7 @@ from keras.layers import Convolution2D, MaxPooling2D
 from keras.layers import Dropout, Flatten
 from keras.layers import LSTM
 
+from copy import deepcopy
 from keras.utils import np_utils
 
 #from sklearn.preprocessing import MinMaxScaler
@@ -57,7 +58,7 @@ values = dataset.values
 values = values.astype('float32')
 # normalize features
 X_std = values
-save_values = values
+save_values = deepcopy(values)
 for i in range(X_std.shape[1]):
 	X_std[:,i] = (values[:,i] - values[:,i].min(axis=0)) / (values[:,i].max(axis=0) - values[:,i].min(axis=0))
 
@@ -115,8 +116,8 @@ yhat = model.predict(test_X)
 test_X = test_X.reshape((test_X.shape[0], n_hours*n_features))
 inv_yhat = yhat
 for i in range(X_std.shape[1]):
-	print(i)
-	inv_yhat  = (inv_yhat * (values[:,i].max(axis=0) - values[:,i].min(axis=0))) + values[:,i].min(axis=0)
+	print(save_values[:,i].min(axis=0))
+	inv_yhat[:,i]  = (inv_yhat[:,i] * (save_values[:,i].max(axis=0) - save_values[:,i].min(axis=0))) + save_values[:,i].min(axis=0)
 
 #inv_yhat = inv_yhat[:,0]
 # invert scaling for actual
@@ -124,7 +125,7 @@ test_y = test_y.reshape((len(test_y), 288))
 #inv_y = concatenate((test_y, test_X[:, -5:]), axis=1)
 inv_y  = test_y
 for i in range(X_std.shape[1]):
-	inv_y  = (inv_y * (values[:,i].max(axis=0) - values[:,i].min(axis=0))) + values[:,i].min(axis=0)
+	inv_y[:,i]  = (inv_y[:,i] * (save_values[:,i].max(axis=0) - save_values[:,i].min(axis=0))) + save_values[:,i].min(axis=0)
 
 rmse2 = np.square(np.subtract(inv_y[:,0], inv_yhat[:,0])).mean()
 print('Test RMSE: %.3f' % rmse2)
