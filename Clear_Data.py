@@ -34,7 +34,7 @@ def clear_beijing_17_18_aq_AND_201803():
 ####--------------------------------------------
 #				create data begining neural network
 ####--------------------------------------------
-def clear_beijing_17_18_aq_AND_201803():
+def clear_beijing_17_18_aq_AND_201803_deep():
 	print("- beijing_17_18_aq_deep", end=' ')
 
 	data_beijing_17_18_aq_deep = pd.read_csv('final_project2018_data/CSV_Create_Plot/beijing_17_18_aq.csv')
@@ -201,12 +201,12 @@ def clear_beijing_17_18_columnByDate():
 
 
 #		main
-#clear_beijing_17_18_aq_AND_201803()
 clear_beijing_17_18_aq_AND_201803()
-#create_Beijing_Weather_Stations_en()
-#clear_beijing_17_18_meo_AND_201803()
-#clear_Beijing_AirQuality_Stations_en()
-#clear_Beijing_grid_weather_station()
-#clear_Beijing_historical_meo_grid()
-#clear_beijing_17_18_columnByStation()
-#clear_beijing_17_18_columnByDate()
+clear_beijing_17_18_aq_AND_201803_deep()
+create_Beijing_Weather_Stations_en()
+clear_beijing_17_18_meo_AND_201803()
+clear_Beijing_AirQuality_Stations_en()
+clear_Beijing_grid_weather_station()
+clear_Beijing_historical_meo_grid()
+clear_beijing_17_18_columnByStation()
+clear_beijing_17_18_columnByDate()

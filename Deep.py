@@ -6,6 +6,8 @@ from numpy import concatenate
 from math import sqrt
 
 from keras.models import Sequential
+from keras.models import load_model
+
 from keras.layers import Dense, Activation
 from keras.layers import Convolution2D, MaxPooling2D
 from keras.layers import Dropout, Flatten
@@ -20,20 +22,9 @@ import pandas as pd
 from pandas import DataFrame
 from pandas import concat
 
+from tensorflow.python.client import device_lib
+print(device_lib.list_local_devices())
 
-import tensorflow as tf
-from keras import backend as K
-
-num_cores = 4
-
-num_GPU = 2
-num_CPU = 5
-
-config = tf.ConfigProto(intra_op_parallelism_threads=num_cores,\
-		inter_op_parallelism_threads=num_cores, allow_soft_placement=True,\
-		device_count = {'CPU' : num_CPU, 'GPU' : num_GPU})
-session = tf.Session(config=config)
-K.set_session(session)
 
 #find on the web
 def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
@@ -65,28 +56,35 @@ values = dataset.values
 # ensure all data is float
 values = values.astype('float32')
 # normalize features
-#scaler = MinMaxScaler(feature_range=(0, 1))
-#scaled = scaler.fit_transform(values)
-#X_std = (values - values.min(axis=0)) / (values.max(axis=0) - values.min(axis=0))
-#scaled = X_std * (1 - 0) + 0
-scaled = values
+X_std = values
+save_values = values
+for i in range(X_std.shape[1]):
+	X_std[:,i] = (values[:,i] - values[:,i].min(axis=0)) / (values[:,i].max(axis=0) - values[:,i].min(axis=0))
 
+
+scaled = X_std
+print(scaled[885,:])
+#scaled = values
 
 n_hours = 48
 n_features = 6
 # frame as supervised learning
 reframed = series_to_supervised(scaled, n_hours, 1)
 
-
-# split into train and test sets
+## split into train and test sets
+print(len(values))
 values = reframed.values
 n_train_hours = 5736
-train = values[:n_train_hours, :]
-test = values[n_train_hours:, :]
+train = values[:(n_train_hours-48), :]
+trainPred = values[48:n_train_hours, :]
+test = values[n_train_hours:(len(values)-48), :]
+testPred = values[(n_train_hours+48):, :]
+
 # split into input and outputs
 n_obs = n_hours * n_features
-train_X, train_y = train[:, :n_obs], train[:, :n_obs]
-test_X, test_y = test[:, :n_obs], test[:, :n_obs]
+train_X, train_y = train[:, :n_obs], trainPred[:, :n_obs]
+test_X, test_y = test[:, :n_obs], testPred[:, :n_obs]
+
 print(train_X.shape, len(train_X), train_y.shape)
 
 # reshape input to be 3D [samples, timesteps, features]
@@ -96,47 +94,43 @@ test_X = test_X.reshape((test_X.shape[0], n_hours, n_features))
 #test_y = test_y.reshape((test_y.shape[0], n_hours, n_features))
 print(train_X.shape, train_y.shape, test_X.shape, test_y.shape)
 print(train_X.shape[1], train_X.shape[2])
+
 # design network
 model = Sequential()
-model.add(LSTM(288, input_shape=(train_X.shape[1], train_X.shape[2])))
-model.add(Dense(288,input_shape=(train_X.shape[1], train_X.shape[2])))
+model.add(LSTM(400, input_shape=(train_X.shape[1], train_X.shape[2])))
+model.add(Dropout(0.5))
+model.add(Dense(288))
 model.summary()
 model.compile(loss='mae', optimizer='adam')
 # fit network
-history = model.fit(train_X, train_y, epochs=70, batch_size=72, validation_data=(test_X, test_y), verbose=2, shuffle=False)
-# plot history
-#pyplot.plot(history.history['loss'], label='train')
-#pyplot.plot(history.history['val_loss'], label='test')
-#pyplot.legend()
-#pyplot.show()
+history = model.fit(train_X, train_y, epochs=200, batch_size=800, verbose=2, validation_data=(test_X, test_y) , shuffle=False)
 
-
-
-
+#export loss history for plot later
+d = {'col1': history.history['loss'], 'col2': history.history['val_loss']}
+df = pd.DataFrame(data=d)
+df.to_csv("history.csv")
 
 # make a prediction
 yhat = model.predict(test_X)
 test_X = test_X.reshape((test_X.shape[0], n_hours*n_features))
-# invert scaling for forecast
-#inv_yhat = concatenate((yhat, test_X[:, -5:]), axis=1)
 inv_yhat = yhat
-#inv_yhat  = (inv_yhat * (inv_yhat.max(axis=0) - inv_yhat.min(axis=0))) + inv_yhat.min(axis=0)
+for i in range(X_std.shape[1]):
+	print(i)
+	inv_yhat  = (inv_yhat * (values[:,i].max(axis=0) - values[:,i].min(axis=0))) + values[:,i].min(axis=0)
 
 #inv_yhat = inv_yhat[:,0]
 # invert scaling for actual
 test_y = test_y.reshape((len(test_y), 288))
 #inv_y = concatenate((test_y, test_X[:, -5:]), axis=1)
 inv_y  = test_y
-#inv_y  = (inv_y * (inv_y.max(axis=0) - inv_y.min(axis=0))) + inv_y.min(axis=0)
+for i in range(X_std.shape[1]):
+	inv_y  = (inv_y * (values[:,i].max(axis=0) - values[:,i].min(axis=0))) + values[:,i].min(axis=0)
 
-#inv_y = inv_y[:,0]
-# calculate RMSE
-#rmse = sqrt(mean_squared_error(inv_y[:,0], inv_yhat[:,0]))
-#print('Test RMSE: %.3f' % rmse)
 rmse2 = np.square(np.subtract(inv_y[:,0], inv_yhat[:,0])).mean()
 print('Test RMSE: %.3f' % rmse2)
 
-#for i in [0,1,2,3,4,5]:
-	#pyplot.plot(inv_yhat[:,i])
-	#pyplot.plot(inv_y[:,i])
-	#pyplot.show()
+d = {'col1': inv_yhat[:,0], 'col2': inv_y[:,0], 'col3': inv_yhat[:,1], 'col4': inv_y[:,1], 'col5': inv_yhat[:,2], 'col6': inv_y[:,2], 'col7': inv_yhat[:,3], 'col8': inv_y[:,3], }
+df = pd.DataFrame(data=d)
+df.to_csv("plotAll.csv")
+
+model.save('model1.h5')
