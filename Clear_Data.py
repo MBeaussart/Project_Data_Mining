@@ -227,61 +227,42 @@ def create_beijing_17_18_with_weather():
 	data_beijing_17_18_aq = data_beijing_17_18_aq.append(data_beijing_201802_201803_aq)
 	data_beijing_17_18_meo = data_beijing_17_18_meo.append(data_beijing_201802_201803_me)
 	#delete duplicates
-	# ...
+	data_beijing_17_18_aq = data_beijing_17_18_aq.drop_duplicates()
 
 	#group station weather
 	Beijing_Weather_Stations_en = Beijing_Weather_Stations_en.append(Beijing_grid_weather_station)
 
 	##	find for each polution station 4 weather stationId
 	#add column longitude and latitude of station we want
-	Beijing_AirQuality_Stations_en['longitude1'] = Beijing_AirQuality_Stations_en['longitude'].apply(giveRoundUP)
-	Beijing_AirQuality_Stations_en['latitude1'] = Beijing_AirQuality_Stations_en['latitude'].apply(giveRoundUP)
+	Beijing_AirQuality_Stations_en['longitude1'] = Beijing_AirQuality_Stations_en['longitude'].apply(giveRoundUP)+0.0
+	Beijing_AirQuality_Stations_en['latitude1'] = Beijing_AirQuality_Stations_en['latitude'].apply(giveRoundUP)+0.0
 
 	Beijing_AirQuality_Stations_en['longitude2'] = Beijing_AirQuality_Stations_en['longitude'].apply(giveRoundUP)
 	Beijing_AirQuality_Stations_en['latitude2'] = Beijing_AirQuality_Stations_en['latitude'].apply(math.ceil)-0.1
 
 	Beijing_AirQuality_Stations_en['longitude3'] = Beijing_AirQuality_Stations_en['longitude'].apply(giveRoundUP)-0.1
-	Beijing_AirQuality_Stations_en['latitude3'] = Beijing_AirQuality_Stations_en['latitude'].apply(giveRoundUP)
+	Beijing_AirQuality_Stations_en['latitude3'] = Beijing_AirQuality_Stations_en['latitude'].apply(giveRoundUP)+0.0
 
 	Beijing_AirQuality_Stations_en['longitude4'] = Beijing_AirQuality_Stations_en['longitude'].apply(giveRoundUP)-0.1
 	Beijing_AirQuality_Stations_en['latitude4'] = Beijing_AirQuality_Stations_en['latitude'].apply(giveRoundUP)-0.1
-
-	#delete column latitude and longitude because dont need anymore
-	#Beijing_AirQuality_Stations_en.drop(Beijing_AirQuality_Stations_en.columns[[1,2]], axis=1, inplace=True)
 
 	Beijing_AirQuality_Stations_en = Beijing_AirQuality_Stations_en.reset_index()
 	data_beijing_17_18_aq = data_beijing_17_18_aq.reset_index()
 
 	#add columns create to data_beijing_17_18_aq
-	#data_beijing_17_18_aq = pd.concat([data_beijing_17_18_aq, Beijing_AirQuality_Stations_en], axis=1)
 	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, Beijing_AirQuality_Stations_en, on='stationId')
 	data_beijing_17_18_aq.drop(["index_x","index_y"], axis=1, inplace=True)
 
-	#merge with longitude latitude with weather station name
-	data_beijing_17_18_aq['longitude']=data_beijing_17_18_aq['longitude1']
-	data_beijing_17_18_aq['latitude']=data_beijing_17_18_aq['latitude1']
-	data_beijing_17_18_aq.drop(['longitude1','latitude1'], axis=1, inplace=True)
-	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, Beijing_grid_weather_station, on=['longitude','latitude'])
-	data_beijing_17_18_aq = data_beijing_17_18_aq.rename(index=str, columns={"stationId_x": "stationId", "stationId_y": "stationId_1"})
-
-	data_beijing_17_18_aq['longitude']=data_beijing_17_18_aq['longitude2']
-	data_beijing_17_18_aq['latitude']=data_beijing_17_18_aq['latitude2']
-	data_beijing_17_18_aq.drop(['longitude2','latitude2'], axis=1, inplace=True)
-	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, Beijing_grid_weather_station, on=['longitude','latitude'])
-	data_beijing_17_18_aq = data_beijing_17_18_aq.rename(index=str, columns={"stationId_x": "stationId", "stationId_y": "stationId_2"})
-
-	data_beijing_17_18_aq['longitude']=data_beijing_17_18_aq['longitude3']
-	data_beijing_17_18_aq['latitude']=data_beijing_17_18_aq['latitude3']
-	data_beijing_17_18_aq.drop(['longitude3','latitude3'], axis=1, inplace=True)
-	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, Beijing_grid_weather_station, on=['longitude','latitude'])
-	data_beijing_17_18_aq = data_beijing_17_18_aq.rename(index=str, columns={"stationId_x": "stationId", "stationId_y": "stationId_3"})
-
-	data_beijing_17_18_aq['longitude']=data_beijing_17_18_aq['longitude4']
-	data_beijing_17_18_aq['latitude']=data_beijing_17_18_aq['latitude4']
-	data_beijing_17_18_aq.drop(['longitude4','latitude4'], axis=1, inplace=True)
-	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, Beijing_grid_weather_station, on=['longitude','latitude'])
-	data_beijing_17_18_aq = data_beijing_17_18_aq.rename(index=str, columns={"stationId_x": "stationId", "stationId_y": "stationId_4"})
+	#find name weather station on the grid
 	data_beijing_17_18_aq.drop(['longitude','latitude'], axis=1, inplace=True)
+	data_beijing_17_18_aq['stationId_1']="beijing_grid_"+(( (data_beijing_17_18_aq['longitude1']-115)*210+(data_beijing_17_18_aq['latitude1']-39)*10)).apply(round).apply(str)
+	data_beijing_17_18_aq.drop(['longitude1','latitude1'], axis=1, inplace=True)
+	data_beijing_17_18_aq['stationId_2']="beijing_grid_"+(( (data_beijing_17_18_aq['longitude2']-115)*210+(data_beijing_17_18_aq['latitude2']-39)*10)).apply(round).apply(str)
+	data_beijing_17_18_aq.drop(['longitude2','latitude2'], axis=1, inplace=True)
+	data_beijing_17_18_aq['stationId_3']="beijing_grid_"+(( (data_beijing_17_18_aq['longitude3']-115)*210+(data_beijing_17_18_aq['latitude3']-39)*10)).apply(round).apply(str)
+	data_beijing_17_18_aq.drop(['longitude3','latitude3'], axis=1, inplace=True)
+	data_beijing_17_18_aq['stationId_4']="beijing_grid_"+(( (data_beijing_17_18_aq['longitude4']-115)*210+(data_beijing_17_18_aq['latitude4']-39)*10)).apply(round).apply(str)
+	data_beijing_17_18_aq.drop(['longitude4','latitude4'], axis=1, inplace=True)
 
 	#merge for each weather station next to the polution station, column about weather
 	data_beijing_17_18_aq['stationName']=data_beijing_17_18_aq['stationId_1']
@@ -351,6 +332,7 @@ def create_beijing_17_18_with_weather():
 
 	data_beijing_17_18_aq['wind_speed/kph']=(data_beijing_17_18_aq['wind_speed/kph_x']+data_beijing_17_18_aq['wind_speed/kph_y'])/4
 	data_beijing_17_18_aq.drop(['wind_speed/kph_x','wind_speed/kph_y'], axis=1, inplace=True)
+	data_beijing_17_18_aq = data_beijing_17_18_aq.sort_values(by=['stationId', 'utc_time'])
 	data_beijing_17_18_aq.to_csv('final_project2018_data/CSV_Create_Plot/beijing_17_18_with_weather.csv', index=False)
 	print("[X]")
 
