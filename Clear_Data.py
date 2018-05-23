@@ -2,8 +2,8 @@ import pandas as pd
 import csv
 import numpy as np
 import time
+import math
 
-#i import to much things...
 
 ####--------------------------------------------
 #				clear beijing_17_18_aq training and test
@@ -34,7 +34,7 @@ def clear_beijing_17_18_aq_AND_201803():
 ####--------------------------------------------
 #				create data begining neural network
 ####--------------------------------------------
-def clear_beijing_17_18_aq_AND_201803_deep():
+def clear_beijing_17_18_aq_deep():
 	print("- beijing_17_18_aq_deep", end=' ')
 
 	data_beijing_17_18_aq_deep = pd.read_csv('final_project2018_data/CSV_Create_Plot/beijing_17_18_aq.csv')
@@ -114,8 +114,8 @@ def clear_Beijing_AirQuality_Stations_en():
 def clear_Beijing_grid_weather_station():
 	print("- Beijing_grid_weather_station.csv", end= " ")
 	col_names= ['Station ID','latitude','longitude']
-	Beijing_AirQuality_Stations_en = pd.read_csv("final_project2018_data/Beijing_grid_weather_station.csv",  names=col_names, header=None)
-	Beijing_AirQuality_Stations_en.to_csv('final_project2018_data/CSV_Create_Plot/Beijing_grid_weather_station.csv', index=False, columns=col_names)
+	Beijing_grid_weather_station = pd.read_csv("final_project2018_data/Beijing_grid_weather_station.csv", names=col_names, header=None)
+	Beijing_grid_weather_station.to_csv('final_project2018_data/CSV_Create_Plot/Beijing_grid_weather_station.csv', index=False)
 	print("[X]")
 
 ####--------------------------------------------
@@ -191,22 +191,178 @@ def clear_beijing_17_18_columnByDate():
 		listColumnnByDate[i]=listColumnnByDate[i].reset_index(drop=True)
 		DataFrame_ColumnnByDate=pd.concat([DataFrame_ColumnnByDate, listColumnnByDate[i]], axis=1)
 
-		print("\t"+str(int(100*i/tailleTotal))+"%", end = "\r")
+		print("\t"+str(int(100*i/tailleTotal)+1)+"%", end = "\r")
 		i=i+1
 
 	DataFrame_ColumnnByDate.to_csv('final_project2018_data/CSV_Create_Plot/beijing_17_18_columnByDate.csv', index=False)
 	print("[X]")
 
+##----------------------------------------------
+##create dataframe station polution with column meteo
+##----------------------------------------------
+def giveRoundUP(x):
+	return math.ceil(x*10)/10
 
+def create_beijing_17_18_with_weather():
+	print("- beijing_17_18_with_weather.csv", end=" ", flush=True)
+	#data polution
+	data_beijing_17_18_aq = pd.read_csv("final_project2018_data/CSV_Create_Plot/beijing_17_18_aq.csv")
+	data_beijing_201802_201803_aq = pd.read_csv('final_project2018_data/CSV_Create_Plot/beijing_201802_201803_aq.csv')
+	#data weather
+	data_beijing_17_18_meo = pd.read_csv("final_project2018_data/CSV_Create_Plot/beijing_17_18_meo.csv")
+	data_beijing_201802_201803_me = pd.read_csv("final_project2018_data/CSV_Create_Plot/beijing_201802_201803_me.csv")
+	data_Beijing_historical_meo_grid = pd.read_csv("final_project2018_data/CSV_Create_Plot/Beijing_historical_meo_grid.csv")
+
+	#data location station
+	Beijing_grid_weather_station = pd.read_csv("final_project2018_data/CSV_Create_Plot/Beijing_grid_weather_station.csv")
+	Beijing_AirQuality_Stations_en = pd.read_csv("final_project2018_data/CSV_Create_Plot/Beijing_AirQuality_Stations_en.csv")
+	Beijing_Weather_Stations_en = pd.read_csv('final_project2018_data/CSV_Create_Plot/Beijing_Weather_Stations_en.csv')
+
+	#define good columns
+	Beijing_grid_weather_station.columns = ['stationId', 'latitude', 'longitude']
+	Beijing_AirQuality_Stations_en.columns = ['stationId', 'longitude','latitude']
+	Beijing_Weather_Stations_en.columns = ['stationId', 'longitude','latitude']
+
+	#ADD some month of 2018 to data 17_18
+	data_beijing_17_18_aq = data_beijing_17_18_aq.append(data_beijing_201802_201803_aq)
+	data_beijing_17_18_meo = data_beijing_17_18_meo.append(data_beijing_201802_201803_me)
+	#delete duplicates
+	# ...
+
+	#group station weather
+	Beijing_Weather_Stations_en = Beijing_Weather_Stations_en.append(Beijing_grid_weather_station)
+
+	##	find for each polution station 4 weather stationId
+	#add column longitude and latitude of station we want
+	Beijing_AirQuality_Stations_en['longitude1'] = Beijing_AirQuality_Stations_en['longitude'].apply(giveRoundUP)
+	Beijing_AirQuality_Stations_en['latitude1'] = Beijing_AirQuality_Stations_en['latitude'].apply(giveRoundUP)
+
+	Beijing_AirQuality_Stations_en['longitude2'] = Beijing_AirQuality_Stations_en['longitude'].apply(giveRoundUP)
+	Beijing_AirQuality_Stations_en['latitude2'] = Beijing_AirQuality_Stations_en['latitude'].apply(math.ceil)-0.1
+
+	Beijing_AirQuality_Stations_en['longitude3'] = Beijing_AirQuality_Stations_en['longitude'].apply(giveRoundUP)-0.1
+	Beijing_AirQuality_Stations_en['latitude3'] = Beijing_AirQuality_Stations_en['latitude'].apply(giveRoundUP)
+
+	Beijing_AirQuality_Stations_en['longitude4'] = Beijing_AirQuality_Stations_en['longitude'].apply(giveRoundUP)-0.1
+	Beijing_AirQuality_Stations_en['latitude4'] = Beijing_AirQuality_Stations_en['latitude'].apply(giveRoundUP)-0.1
+
+	#delete column latitude and longitude because dont need anymore
+	#Beijing_AirQuality_Stations_en.drop(Beijing_AirQuality_Stations_en.columns[[1,2]], axis=1, inplace=True)
+
+	Beijing_AirQuality_Stations_en = Beijing_AirQuality_Stations_en.reset_index()
+	data_beijing_17_18_aq = data_beijing_17_18_aq.reset_index()
+
+	#add columns create to data_beijing_17_18_aq
+	#data_beijing_17_18_aq = pd.concat([data_beijing_17_18_aq, Beijing_AirQuality_Stations_en], axis=1)
+	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, Beijing_AirQuality_Stations_en, on='stationId')
+	data_beijing_17_18_aq.drop(["index_x","index_y"], axis=1, inplace=True)
+
+	#merge with longitude latitude with weather station name
+	data_beijing_17_18_aq['longitude']=data_beijing_17_18_aq['longitude1']
+	data_beijing_17_18_aq['latitude']=data_beijing_17_18_aq['latitude1']
+	data_beijing_17_18_aq.drop(['longitude1','latitude1'], axis=1, inplace=True)
+	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, Beijing_grid_weather_station, on=['longitude','latitude'])
+	data_beijing_17_18_aq = data_beijing_17_18_aq.rename(index=str, columns={"stationId_x": "stationId", "stationId_y": "stationId_1"})
+
+	data_beijing_17_18_aq['longitude']=data_beijing_17_18_aq['longitude2']
+	data_beijing_17_18_aq['latitude']=data_beijing_17_18_aq['latitude2']
+	data_beijing_17_18_aq.drop(['longitude2','latitude2'], axis=1, inplace=True)
+	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, Beijing_grid_weather_station, on=['longitude','latitude'])
+	data_beijing_17_18_aq = data_beijing_17_18_aq.rename(index=str, columns={"stationId_x": "stationId", "stationId_y": "stationId_2"})
+
+	data_beijing_17_18_aq['longitude']=data_beijing_17_18_aq['longitude3']
+	data_beijing_17_18_aq['latitude']=data_beijing_17_18_aq['latitude3']
+	data_beijing_17_18_aq.drop(['longitude3','latitude3'], axis=1, inplace=True)
+	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, Beijing_grid_weather_station, on=['longitude','latitude'])
+	data_beijing_17_18_aq = data_beijing_17_18_aq.rename(index=str, columns={"stationId_x": "stationId", "stationId_y": "stationId_3"})
+
+	data_beijing_17_18_aq['longitude']=data_beijing_17_18_aq['longitude4']
+	data_beijing_17_18_aq['latitude']=data_beijing_17_18_aq['latitude4']
+	data_beijing_17_18_aq.drop(['longitude4','latitude4'], axis=1, inplace=True)
+	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, Beijing_grid_weather_station, on=['longitude','latitude'])
+	data_beijing_17_18_aq = data_beijing_17_18_aq.rename(index=str, columns={"stationId_x": "stationId", "stationId_y": "stationId_4"})
+	data_beijing_17_18_aq.drop(['longitude','latitude'], axis=1, inplace=True)
+
+	#merge for each weather station next to the polution station, column about weather
+	data_beijing_17_18_aq['stationName']=data_beijing_17_18_aq['stationId_1']
+	data_beijing_17_18_aq.drop(['stationId_1'], axis=1, inplace=True)
+	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, data_Beijing_historical_meo_grid, on=['utc_time','stationName'])
+
+	#data_beijing_17_18_aq.drop(['stati'], axis=1, inplace=True)
+	data_beijing_17_18_aq['stationName']=data_beijing_17_18_aq['stationId_2']
+	data_beijing_17_18_aq.drop(['stationId_2'], axis=1, inplace=True)
+	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, data_Beijing_historical_meo_grid, on=['utc_time','stationName'])
+
+	#add weather station 1 and 2
+	data_beijing_17_18_aq['temperature']=data_beijing_17_18_aq['temperature_x']+data_beijing_17_18_aq['temperature_y']
+	data_beijing_17_18_aq.drop(['temperature_x','temperature_y'], axis=1, inplace=True)
+
+	data_beijing_17_18_aq['pressure']=data_beijing_17_18_aq['pressure_x']+data_beijing_17_18_aq['pressure_y']
+	data_beijing_17_18_aq.drop(['pressure_x','pressure_y'], axis=1, inplace=True)
+
+	data_beijing_17_18_aq['humidity']=data_beijing_17_18_aq['humidity_x']+data_beijing_17_18_aq['humidity_y']
+	data_beijing_17_18_aq.drop(['humidity_x','humidity_y'], axis=1, inplace=True)
+
+	data_beijing_17_18_aq['wind_direction']=data_beijing_17_18_aq['wind_direction_x']+data_beijing_17_18_aq['wind_direction_y']
+	data_beijing_17_18_aq.drop(['wind_direction_x','wind_direction_y'], axis=1, inplace=True)
+
+	data_beijing_17_18_aq['wind_speed/kph']=data_beijing_17_18_aq['wind_speed/kph_x']+data_beijing_17_18_aq['wind_speed/kph_y']
+	data_beijing_17_18_aq.drop(['wind_speed/kph_x','wind_speed/kph_y'], axis=1, inplace=True)
+
+	#station 3
+	data_beijing_17_18_aq['stationName']=data_beijing_17_18_aq['stationId_3']
+	data_beijing_17_18_aq.drop(['stationId_3'], axis=1, inplace=True)
+	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, data_Beijing_historical_meo_grid, on=['utc_time','stationName'])
+
+	#add weather station 1&2 with 3
+	data_beijing_17_18_aq['temperature']=data_beijing_17_18_aq['temperature_x']+data_beijing_17_18_aq['temperature_y']
+	data_beijing_17_18_aq.drop(['temperature_x','temperature_y'], axis=1, inplace=True)
+
+	data_beijing_17_18_aq['pressure']=data_beijing_17_18_aq['pressure_x']+data_beijing_17_18_aq['pressure_y']
+	data_beijing_17_18_aq.drop(['pressure_x','pressure_y'], axis=1, inplace=True)
+
+	data_beijing_17_18_aq['humidity']=data_beijing_17_18_aq['humidity_x']+data_beijing_17_18_aq['humidity_y']
+	data_beijing_17_18_aq.drop(['humidity_x','humidity_y'], axis=1, inplace=True)
+
+	data_beijing_17_18_aq['wind_direction']=data_beijing_17_18_aq['wind_direction_x']+data_beijing_17_18_aq['wind_direction_y']
+	data_beijing_17_18_aq.drop(['wind_direction_x','wind_direction_y'], axis=1, inplace=True)
+
+	data_beijing_17_18_aq['wind_speed/kph']=data_beijing_17_18_aq['wind_speed/kph_x']+data_beijing_17_18_aq['wind_speed/kph_y']
+	data_beijing_17_18_aq.drop(['wind_speed/kph_x','wind_speed/kph_y'], axis=1, inplace=True)
+
+	#station 4
+	data_beijing_17_18_aq['stationName']=data_beijing_17_18_aq['stationId_4']
+	data_beijing_17_18_aq.drop(['stationId_4'], axis=1, inplace=True)
+	data_beijing_17_18_aq = pd.merge(data_beijing_17_18_aq, data_Beijing_historical_meo_grid, on=['utc_time','stationName'])
+	data_beijing_17_18_aq.drop(['stationName'], axis=1, inplace=True)
+
+	#add weather station 1&2&3 with 4
+	data_beijing_17_18_aq['temperature']=(data_beijing_17_18_aq['temperature_x']+data_beijing_17_18_aq['temperature_y'])/4
+	data_beijing_17_18_aq.drop(['temperature_x','temperature_y'], axis=1, inplace=True)
+
+	data_beijing_17_18_aq['pressure']=(data_beijing_17_18_aq['pressure_x']+data_beijing_17_18_aq['pressure_y'])/4
+	data_beijing_17_18_aq.drop(['pressure_x','pressure_y'], axis=1, inplace=True)
+
+	data_beijing_17_18_aq['humidity']=(data_beijing_17_18_aq['humidity_x']+data_beijing_17_18_aq['humidity_y'])/4
+	data_beijing_17_18_aq.drop(['humidity_x','humidity_y'], axis=1, inplace=True)
+
+	data_beijing_17_18_aq['wind_direction']=(data_beijing_17_18_aq['wind_direction_x']+data_beijing_17_18_aq['wind_direction_y'])/4
+	data_beijing_17_18_aq.drop(['wind_direction_x','wind_direction_y'], axis=1, inplace=True)
+
+	data_beijing_17_18_aq['wind_speed/kph']=(data_beijing_17_18_aq['wind_speed/kph_x']+data_beijing_17_18_aq['wind_speed/kph_y'])/4
+	data_beijing_17_18_aq.drop(['wind_speed/kph_x','wind_speed/kph_y'], axis=1, inplace=True)
+	data_beijing_17_18_aq.to_csv('final_project2018_data/CSV_Create_Plot/beijing_17_18_with_weather.csv', index=False)
+	print("[X]")
 
 
 #		main
-clear_beijing_17_18_aq_AND_201803()
-clear_beijing_17_18_aq_AND_201803_deep()
-create_Beijing_Weather_Stations_en()
-clear_beijing_17_18_meo_AND_201803()
-clear_Beijing_AirQuality_Stations_en()
-clear_Beijing_grid_weather_station()
-clear_Beijing_historical_meo_grid()
-clear_beijing_17_18_columnByStation()
-clear_beijing_17_18_columnByDate()
+#clear_beijing_17_18_aq_AND_201803()
+#clear_beijing_17_18_aq_deep()
+#create_Beijing_Weather_Stations_en()
+#clear_beijing_17_18_meo_AND_201803()
+#clear_Beijing_AirQuality_Stations_en()
+#clear_Beijing_grid_weather_station()
+#clear_Beijing_historical_meo_grid()
+#clear_beijing_17_18_columnByStation()
+#clear_beijing_17_18_columnByDate()
+create_beijing_17_18_with_weather()
